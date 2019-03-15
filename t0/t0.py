@@ -88,7 +88,7 @@ def switch_blocks(image, dest_block_number, source_block):
     return image
 
 def switch_blocks_by_seq(image, sequence):
-    mosaic_block_aux = get_block(image, sequence[0])
+    mosaic_block_aux = get_block(image, sequence[0]).copy()
     i = 0
     while i < (len(sequence) - 1):
         image = switch_blocks(image, sequence[i], get_block(image,\
