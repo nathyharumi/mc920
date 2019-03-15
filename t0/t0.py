@@ -30,14 +30,9 @@ def bit_plane():
 
 def mosaic():
     image = get_image("Enter the image filename: ")
-    seq1 = (1, 6, 16, 5, 8, 9, 12, 7)
-    seq2 = (2, 11)
-    seq3 = (3, 13, 4)
-    seq4 = (10, 14, 15)
-    switch_blocks_by_seq(image, seq1)
-    switch_blocks_by_seq(image, seq2)
-    switch_blocks_by_seq(image, seq3)
-    switch_blocks_by_seq(image, seq4)
+    sequences = ((1, 6, 16, 5, 8, 9, 12, 7), (2, 11), (3, 13, 4), (10, 14, 15))
+    for sequence in sequences:
+        switch_blocks_by_seq(image, sequence)
     return save_image(image)
 
 def images_combination():
