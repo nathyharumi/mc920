@@ -9,7 +9,7 @@ def save_image(image):
 
 def brightness():
     image = get_image("Enter the image filename: ")
-    gamma = float(input("Enter the gama value: "))
+    gamma = float(input("Enter the gamma value: "))
     brightness_adjustment = ((image/255) ** (1/gamma))*255
     return save_image(brightness_adjustment)
 
