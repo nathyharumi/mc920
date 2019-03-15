@@ -26,14 +26,30 @@ def bit_plane():
     image = get_image("Enter the image filename: ")
     bit_plane_number = float(input("Enter the bit plane number: "))
     result = image & bit_plane_mask(bit_plane_number)
-    save_image(result)
-    exit()
+    return save_image(result)
 
 def mosaic():
     image = get_image("Enter the image filename: ")
-    mosaic_block_height = image.shape[0]/4
-    mosaic_block_width = image.shape[1]/4
-    exit()
+    mosaic_block_aux = get_block(image, 1)
+    seq1 = (1, 6, 16, 5, 8, 9, 12, 7)
+    i = 0
+    while i < (len(seq1) - 1):
+        image = switch_blocks(image, i, get_block(image, i+1))
+        i = i + 1
+
+    image = switch_blocks(image, 7, mosaic_block_aux)
+    mosaic_block_aux = get_block(image, 2)
+    image = switch_blocks(image, 2, get_block(image, 11))
+    image = switch_blocks(image, 11, mosaic_block_aux)
+    mosaic_block_aux = get_block(image, 3)
+    image = switch_blocks(image, 3, get_block(image, 13))
+    image = switch_blocks(image, 13, get_block(image, 4))
+    image = switch_blocks(image, 4, mosaic_block_aux)
+    mosaic_block_aux = get_block(image, 10)
+    image = switch_blocks(image, 10, get_block(image, 14))
+    image = switch_blocks(image, 14, get_block(image, 15))
+    image = switch_blocks(image, 15, mosaic_block_aux)
+    return save_image(image)
 
 def images_combination():
     image_1 = get_image("Enter the first image filename: ")
@@ -60,6 +76,31 @@ def bit_plane_mask(bit_plane_number):
     6: 64, #01000000
     7: 128 #10000000
     }.get(bit_plane_number, 255) #11111111
+
+def get_block_limits(image, block_number):
+    block_height = int(image.shape[0]/4)
+    block_width = int(image.shape[1]/4)
+    block_line = int((block_number-1)/4)
+    block_column = (block_number-1)%4
+    return {
+    "Xi" : block_line*block_height,
+    "Xf": (block_line+1)*block_height,
+    "Yi": block_column*block_width,
+    "Yf": (block_column+1)*block_width
+    }
+
+def get_block(image, block_number):
+    block_limits = get_block_limits(image, block_number)
+    block = image[block_limits.get("Xi", 0):block_limits.get("Xf", 0),\
+    block_limits.get("Yi", 0):block_limits.get("Yf", 0)]
+    return block
+
+def switch_blocks(image, dest_block_number, source_block):
+    dest_block_limits = get_block_limits(image, dest_block_number)
+    image[dest_block_limits.get("Xi", 0):dest_block_limits.get("Xf", 0),\
+    dest_block_limits.get("Yi", 0):dest_block_limits.get("Yf", 0)] \
+    = source_block
+    return image
 
 ## Regular flow
 option = int(input("Enter the number of an option: \n\
