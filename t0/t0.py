@@ -30,25 +30,14 @@ def bit_plane():
 
 def mosaic():
     image = get_image("Enter the image filename: ")
-    mosaic_block_aux = get_block(image, 1)
     seq1 = (1, 6, 16, 5, 8, 9, 12, 7)
-    i = 0
-    while i < (len(seq1) - 1):
-        image = switch_blocks(image, i, get_block(image, i+1))
-        i = i + 1
-
-    image = switch_blocks(image, 7, mosaic_block_aux)
-    mosaic_block_aux = get_block(image, 2)
-    image = switch_blocks(image, 2, get_block(image, 11))
-    image = switch_blocks(image, 11, mosaic_block_aux)
-    mosaic_block_aux = get_block(image, 3)
-    image = switch_blocks(image, 3, get_block(image, 13))
-    image = switch_blocks(image, 13, get_block(image, 4))
-    image = switch_blocks(image, 4, mosaic_block_aux)
-    mosaic_block_aux = get_block(image, 10)
-    image = switch_blocks(image, 10, get_block(image, 14))
-    image = switch_blocks(image, 14, get_block(image, 15))
-    image = switch_blocks(image, 15, mosaic_block_aux)
+    seq2 = (2, 11)
+    seq3 = (3, 13, 4)
+    seq4 = (10, 14, 15)
+    switch_blocks_by_seq(image, seq1)
+    switch_blocks_by_seq(image, seq2)
+    switch_blocks_by_seq(image, seq3)
+    switch_blocks_by_seq(image, seq4)
     return save_image(image)
 
 def images_combination():
@@ -100,6 +89,16 @@ def switch_blocks(image, dest_block_number, source_block):
     image[dest_block_limits.get("Xi", 0):dest_block_limits.get("Xf", 0),\
     dest_block_limits.get("Yi", 0):dest_block_limits.get("Yf", 0)] \
     = source_block
+    return image
+
+def switch_blocks_by_seq(image, sequence):
+    mosaic_block_aux = get_block(image, sequence[0])
+    i = 0
+    while i < (len(sequence) - 1):
+        image = switch_blocks(image, sequence[i], get_block(image,\
+        sequence[i+1]))
+        i = i + 1
+    image = switch_blocks(image, sequence[len(sequence)-1], mosaic_block_aux)
     return image
 
 ## Regular flow
