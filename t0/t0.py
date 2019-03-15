@@ -13,15 +13,31 @@ def brightness():
     brightness_adjustment = ((image/255) ** (1/gamma))*255
     return save_image(brightness_adjustment)
 
+def bit_plane_mask(bit_plane_number):
+    return {
+    0: 1,  #00000001
+    1: 2,  #00000010
+    2: 4,  #00000100
+    3: 8,  #00001000
+    4: 16, #00010000
+    5: 32, #00100000
+    6: 64, #01000000
+    7: 128 #10000000
+    }.get(bit_plane_number, 255) #11111111
+
 def bit_plane():
     image = get_image("Enter the image filename: ")
     bit_plane_number = float(input("Enter the bit plane number: "))
+    result = image & bit_plane_mask(bit_plane_number)
+    save_image(result)
     exit()
 
 def mosaic():
     image = get_image("Enter the image filename: ")
+    mosaic_block_height = image.shape[0]/4
+    mosaic_block_width = image.shape[1]/4
     exit()
-    
+
 def images_combination():
     image_1 = get_image("Enter the first image filename: ")
     image_2 = get_image("Enter the second image filename: ")
