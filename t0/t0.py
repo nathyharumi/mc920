@@ -40,7 +40,8 @@ def images_combination():
     image_2 = get_image("Enter the second image filename: ")
     image_1_visibility_rate = float(input("Enter the visibility rate of the \
     first image (0 to 1): "))
-    exit()
+    result = image_1*image_1_visibility_rate + image_2*(1 - image_1_visibility_rate)
+    return save_image(result)
 
 def invalid_option():
     print("Not a valid option.")
