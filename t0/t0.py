@@ -62,6 +62,7 @@ def bit_plane_mask(bit_plane_number):
     7: 128 #10000000
     }.get(bit_plane_number, 255) #11111111
 
+# Get the block limits by its number
 def get_block_limits(image, block_number):
     block_height = int(image.shape[0]/4)
     block_width = int(image.shape[1]/4)
@@ -74,11 +75,12 @@ def get_block_limits(image, block_number):
     "Yf": (block_column+1)*block_width
     }
 
+
 def get_block(image, block_number):
     block_limits = get_block_limits(image, block_number)
     block = image[block_limits.get("Xi", 0):block_limits.get("Xf", 0),\
     block_limits.get("Yi", 0):block_limits.get("Yf", 0)]
-    return block
+    return block.copy()
 
 def switch_blocks(image, dest_block_number, source_block):
     dest_block_limits = get_block_limits(image, dest_block_number)
@@ -88,7 +90,7 @@ def switch_blocks(image, dest_block_number, source_block):
     return image
 
 def switch_blocks_by_seq(image, sequence):
-    mosaic_block_aux = get_block(image, sequence[0]).copy()
+    mosaic_block_aux = get_block(image, sequence[0])
     i = 0
     while i < (len(sequence) - 1):
         image = switch_blocks(image, sequence[i], get_block(image,\
