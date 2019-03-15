@@ -1,5 +1,4 @@
 import cv2
-import numpy as np
 
 ## I/O images
 def get_image(input_text):
