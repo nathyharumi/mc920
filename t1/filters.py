@@ -93,8 +93,8 @@ def frequency_filter(filename, sigma):
     # FFT and applying Gaussian Filter
     f = _fftshift(_fft(image))
     f = f*gf
-    f = _ifft(_ifftshift(f))
-    result = _normalize(np.abs(f))
+    result = _ifft(_ifftshift(f))
+    result = _normalize(np.abs(result))
 
     # Saving image
     _save_image(result, filename, _get_gaussian_filename_sufix(sigma))
