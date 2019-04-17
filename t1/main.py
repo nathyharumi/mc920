@@ -3,7 +3,7 @@ from filters import *
 filename = input("Enter the image filename: \n")
 
 option = int(input("Enter the number of an option [1-2]: \n\
-1 - Space filter\n\
+1 - Spatial filter\n\
 2 - Frequency filter\n"))
 
 if option == 1:
@@ -11,8 +11,10 @@ if option == 1:
 1 - h1\n\
 2 - h2\n\
 3 - h3 and h4\n"))
-    space_filter(filename, filter_option)
+    spatial_filter(filename, filter_option)
 elif option == 2:
-    frequency_filter(filename)
+    sigma = float(input("Enter the Gaussian standard deviation (if negative, it\
+     is going to be 1.1):\n"))
+    frequency_filter(filename, sigma)
 else:
     invalid_option()

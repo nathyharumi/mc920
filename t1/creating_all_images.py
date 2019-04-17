@@ -10,5 +10,5 @@ images_path = [baboon_image_path, butterfly_image_path, city_image_path, house_i
 
 for img in images_path:
     for i in range(3):
-        space_filter(img, i+1)
-    frequency_filter(img)
+        spatial_filter(img, i+1)
+    frequency_filter(img, 5.4)
