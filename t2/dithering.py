@@ -8,6 +8,11 @@ import os
 import numpy as np
 
 def _get_image(filename):
+    """ Get a .PGM image by its filepath
+
+        Args:
+        filename (str): the filepath of the image
+    """
     return cv2.imread(filename, -1)
 
 def _save_image(image, filename, sufix):
