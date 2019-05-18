@@ -214,6 +214,7 @@ void read_image_pbm(argc, argv)
  }
 
  /* read header */
+ //fgets(str, 80, fin);
  fgets(str, 80, fin);
  fscanf(fin, "%d %d\n", &width, &height);
 
