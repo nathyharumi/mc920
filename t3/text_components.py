@@ -7,7 +7,7 @@ import cv2
 import os
 import numpy as np
 
-def _get_image(filename):
+def get_image(filename):
     """ Get a .PBM image by its filepath
 
         Args:
@@ -18,7 +18,7 @@ def _get_image(filename):
     """
     return cv2.imread(filename, -1)
 
-def _save_image(image, filename, sufix):
+def save_image(image, filename, sufix):
     """ Save images in .PBM at "results" directory based on its previous filename
 
         Args:
@@ -38,7 +38,7 @@ def _save_image(image, filename, sufix):
     # Save image
     cv2.imwrite(saving_filename, image)
 
-def _closing(image, kernel):
+def closing(image, kernel):
     """ Implement the closing operation using dilate and erode
 
     Args:
@@ -50,29 +50,40 @@ def _closing(image, kernel):
     """
     return cv2.erode(cv2.dilate(image, kernel), kernel)
 
-def _preprocessing(image):
+def row_column_closing(image, row_kernel, column_kernel):
+    image = cv2.bitwise_not(image)
+
+    row_closing = closing(image, row_kernel)
+    column_closing = closing(image, column_kernel)
+    return row_closing, column_closing
+
+def preprocessing(image):
     ROW_STRUCTURAL_KERNEL = np.ones((1, 100))
     COLUMN_STRUCTURAL_KERNEL = np.ones((200, 1))
     POS_STRUCTURAL_KERNEL = np.ones((1, 30))
 
-    image = cv2.bitwise_not(image)
-
-    row_closing = _closing(image, ROW_STRUCTURAL_KERNEL)
-    column_closing = _closing(image, COLUMN_STRUCTURAL_KERNEL)
-
+    row_closing, column_closing = row_column_closing(image,
+        ROW_STRUCTURAL_KERNEL, COLUMN_STRUCTURAL_KERNEL)
     merged_image = cv2.bitwise_and(row_closing, column_closing)
-    return _closing(merged_image, POS_STRUCTURAL_KERNEL)
 
-def _get_ratios(image, components):
-    black_pixels_ratio = []
-    transitions_ratio = []
-    for component in components:
-        area = component[2] * component[3]
-        black_pixels = _get_black_pixels_per_component(image, component)
-        transitions = _get_transitions_per_component(image, component)
+    return closing(merged_image, POS_STRUCTURAL_KERNEL)
 
-        black_pixels_ratio.append(black_pixels/area)
-        transitions_ratio.append(transitions/black_pixels)
+def find_words_preprocessing(image):
+    ROW_STRUCTURAL_KERNEL = np.ones((1, 10))
+    COLUMN_STRUCTURAL_KERNEL = np.ones((10, 1))
+
+    row_closing, column_closing = row_column_closing(image,
+        ROW_STRUCTURAL_KERNEL, COLUMN_STRUCTURAL_KERNEL)
+
+    return cv2.bitwise_or(row_closing, column_closing)
+
+def get_ratios_per_component(image, component):
+    area = component[2] * component[3]
+    black_pixels = _get_black_pixels_per_component(image, component)
+    transitions = _get_transitions_per_component(image, component)
+
+    black_pixels_ratio = black_pixels/area
+    transitions_ratio = transitions/black_pixels
     return black_pixels_ratio, transitions_ratio
 
 def _get_black_pixels_per_component(image, component):
@@ -99,19 +110,62 @@ def _get_transitions_per_component(image, component):
                 transitions = transitions + 1
     return transitions
 
-def _get_components_coordenates(image):
+def get_components_coordenates(image):
     n_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(image)
     return stats
 
-def _get_text_components(components, black_pixels_ratios, transitions_ratios):
-    return components
+def get_text_components(original_image, components):
+    # Rules
+    MIN_BP_RATIO = 0.2
+    MAX_BP_RATIO = 0.9
+    MIN_TR_RATIO = 0.0
+    MAX_TR_RATIO = 1.0
+
+    text_components = []
+
+    for component in components:
+        black_pixels_ratio, transitions_ratio = get_ratios_per_component(original_image, component)
+        if MIN_BP_RATIO < black_pixels_ratio and black_pixels_ratio < MAX_BP_RATIO \
+        and MIN_TR_RATIO < transitions_ratio and transitions_ratio < MAX_TR_RATIO:
+            text_components.append(component)
+
+    return text_components
+
+def highlight_components(PBM_image, components):
+    image = PBM_image.copy()
+    for component in components:
+        x_min, y_min, w, h, area = component
+        for i in range(h):
+            y = y_min + i
+            image[y][x_min] = 0
+            image[y][x_min + w - 1] = 0
+        for i in range(w):
+            x = x_min + i
+            image[y_min][x] = 0
+            image[y_min + h - 1][x] = 0
+    return image
+
+def get_words_components_from_text_components(original_image, text_components):
+    preprocessed_image = find_words_preprocessing(original_image)
+    words_components = []
+    for component in text_components:
+        x_min, y_min, w, h, area = component
+        words_components.extend(get_components_coordenates(original_image
+            [y_min:y_min + h - 1][x_min:x_min + w - 1])[1:])
+    return words_components
 
 def main():
-    original_image = _get_image("bitmap.pbm")
-    image = _preprocessing(original_image)
-    components = _get_components_coordenates(image)
-    black_pixels_ratios, transitions_ratios = _get_ratios(original_image, components)
-    text_components = _get_text_components(components, black_pixels_ratios, transitions_ratios)
+    filename = "bitmap.pbm"
+    original_image = get_image(filename)
+    image = preprocessing(original_image)
+    components = get_components_coordenates(image)
+    text_components = get_text_components(original_image, components)
+    words_components = get_words_components_from_text_components(original_image, text_components)
+    highlighted_lines = highlight_components(original_image, text_components)
+    highlighted_words = highlight_components(highlighted_lines, words_components)
+    save_image(highlighted_lines, filename, "highlighted_lines")
+    save_image(highlighted_words, filename, "highlighted_words")
+
 
 if __name__ == '__main__':
     main()
