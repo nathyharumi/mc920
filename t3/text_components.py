@@ -212,16 +212,27 @@ def highlight_components(original_image, components, pixel_color):
 
     """
     image = original_image.copy()
+    y_max, x_max = original_image.shape[:2]
     for component in components:
         x_min, y_min, w, h, area = component
         for i in range(h):
             y = y_min + i
             image[y, x_min] = pixel_color
             image[y, x_min + w - 1] = pixel_color
+            for di in range(1, 4):
+                if x_min - di >= 0:
+                    image[y, x_min - di] = pixel_color
+                if x_min + w -1 + di< x_max:
+                    image[y, x_min + w - 1 + di] = pixel_color
         for i in range(w):
             x = x_min + i
             image[y_min, x] = pixel_color
             image[y_min + h - 1, x] = pixel_color
+            for di in range(1, 4):
+                if y_min - di >= 0:
+                    image[y_min - di, x] = pixel_color
+                if y_min + h + 1 - di< y_max:
+                    image[y_min + h -1 + di, x] = pixel_color
     return image
 
 def get_words_components_from_text_components(original_image, text_components):
