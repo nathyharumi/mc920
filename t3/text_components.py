@@ -18,8 +18,8 @@ def get_image(filename):
     """
     return cv2.imread(filename, -1)
 
-def save_image(image, filename, sufix):
-    """ Save images in .PBM at "results" directory based on its previous filename
+def save_image(image, filename, sufix, extension):
+    """ Save images at "results" directory based on its previous filename
 
         Args:
         image (np.ndarray): image to be saved
@@ -33,7 +33,7 @@ def save_image(image, filename, sufix):
         os.mkdir("results")
 
     # Set filepath
-    saving_filename = "results/" + filename.split("/")[-1][:-4] + "_" + sufix + ".pbm"
+    saving_filename = "results/" + filename.split("/")[-1][:-4] + "_" + sufix + extension
 
     # Save image
     cv2.imwrite(saving_filename, image)
@@ -198,29 +198,30 @@ def get_text_components(original_image, components):
 
     return text_components
 
-def highlight_components(PBM_image, components):
+def highlight_components(original_image, components, pixel_color):
     """ Highlight the components by outlining the components on the original
     image
 
     Args:
-    PBM_image(np.ndarray): original PBM image
+    original_image(np.ndarray): original image
     components(list): components to be outlined
+    pixel_color(list or int): color of the outline, depending on the image type
 
     Returns:
     np.ndarray: image with highlighted components
 
     """
-    image = PBM_image.copy()
+    image = original_image.copy()
     for component in components:
         x_min, y_min, w, h, area = component
         for i in range(h):
             y = y_min + i
-            image[y, x_min] = 0
-            image[y, x_min + w - 1] = 0
+            image[y, x_min] = pixel_color
+            image[y, x_min + w - 1] = pixel_color
         for i in range(w):
             x = x_min + i
-            image[y_min, x] = 0
-            image[y_min + h - 1, x] = 0
+            image[y_min, x] = pixel_color
+            image[y_min + h - 1, x] = pixel_color
     return image
 
 def get_words_components_from_text_components(original_image, text_components):
@@ -254,17 +255,28 @@ def main():
     original_image = get_image(filename)
     image = preprocessing(original_image)
     components = get_components_coordenates(image)
-    text_components = get_text_components(original_image, components)
-    words_components, words_per_line = get_words_components_from_text_components(
-    original_image, text_components)
-    highlighted_lines = highlight_components(original_image, text_components)
-    highlighted_words = highlight_components(original_image, words_components)
-    print("number of lines: {}, total number of words: {}".format(len(
-    text_components), len(words_components)))
-    print("number of words per line: {}".format(words_per_line))
-    save_image(highlighted_lines, filename, "highlighted_lines")
-    save_image(highlighted_words, filename, "highlighted_words")
 
+    # Line components
+    text_components = get_text_components(original_image, components)
+    highlighted_lines = highlight_components(original_image, text_components, 0)
+    save_image(highlighted_lines, filename, "highlighted_lines", ".pbm")
+
+    # Word components
+    word_components, words_per_line = get_words_components_from_text_components(
+    original_image, text_components)
+    highlighted_words = highlight_components(original_image, word_components, 0)
+    save_image(highlighted_words, filename, "highlighted_words", ".pbm")
+
+    # Save PNG images for report purposes and better visualization
+    image_3_channel = cv2.imread(filename)
+    png_lines = highlight_components(image_3_channel, text_components, [255, 0, 0])
+    png_words = highlight_components(image_3_channel, word_components, [0, 0, 255])
+    save_image(image_3_channel, filename, "original", ".png")
+    save_image(png_lines, filename, "highlighted_lines", ".png")
+    save_image(png_words, filename, "highlighted_words", ".png")
+
+    print("number of lines: {}, total number of words: {}".format(len(
+    text_components), len(word_components)))
 
 if __name__ == '__main__':
     main()
