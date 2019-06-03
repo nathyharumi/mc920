@@ -262,7 +262,7 @@ def get_words_components_from_text_components(original_image, text_components):
     return words_components, words_per_line
 
 def main():
-    filename = "bitmap.pbm"
+    filename = "../images/pbm/bitmap.pbm"
     original_image = get_image(filename)
     image = preprocessing(original_image)
     components = get_components_coordenates(image)
