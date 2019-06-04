@@ -60,18 +60,18 @@ def get_points(matches, kp_1, kp_2):
     return pts_1, pts_2
 
 def merge_images(left_img, right_img, src_pts, dst_pts):
-    M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
+    (hl, wl) = left_img.shape[:2]
+    (hr, wr) = right_img.shape[:2]
 
-    right_img_warped = cv2.warpPerspective(right_img, M, (right_img.shape[1] + left_img.shape[1], right_img.shape[0] + left_img.shape[0]))
+    M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
+    right_img_warped = cv2.warpPerspective(right_img, M, (wr + wl, hr + hl))
 
     #points = np.ones([4, 2, 1]).astype('float32')
     #print(points.shape)
     #warped_points = cv2.perspectiveTransform(points, M)
 
-    (hA, wA) = left_img.shape[:2]
-    (hB, wB) = right_img_warped.shape[:2]
     vis = right_img_warped.copy()
-    vis[0:hA, 0:wA] = left_img
+    vis[0:hl, 0:wl] = left_img
     plt.imshow(vis), plt.show()
 
 def surf_keypoints(img_1, img_2):
