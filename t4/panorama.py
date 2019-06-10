@@ -1,3 +1,9 @@
+"""
+Trabalho 4 - Panorama
+Nathália Harumi Kuromiya
+RA 175188
+"""
+
 import os
 import cv2
 import numpy as np
@@ -48,13 +54,29 @@ def get_detector_descriptor_and_normtype(option):
     "ORB" : (orb, orb, cv2.NORM_HAMMING)
     }.get(option, (None, None))
 
-def get_matches(bf, kp_1, desc_1, kp_2, desc_2):
+def get_first_20_matches(bf, desc_1, desc_2):
     # Match descriptors.
     matches = bf.match(desc_1,desc_2)
     # Sort them in the order of their distance.
     matches = sorted(matches, key = lambda x:x.distance)
 
-    return len(matches), matches[:10]
+    return len(matches), matches[:20]
+
+def get_matches_ratio_test(bf, desc_1, desc_2):
+    matches = bf.knnMatch(desc_1, desc_2, k=2)
+    good = []
+    for m,n in matches:
+        if m.distance < 0.7*n.distance:
+            good.append(m)
+    return len(matches), good
+
+def get_matches(bf, desc_1, desc_2, match_filter_method):
+    if match_filter_method == "FIRST_20":
+        return get_first_20_matches(bf, desc_1, desc_2)
+    elif match_filter_method == "RATIO_TEST":
+        return get_matches_ratio_test(bf, desc_1, desc_2)
+    else:
+        return None
 
 def get_points(matches, kp_1, kp_2):
     pts_1 = np.float32([ kp_1[m.queryIdx].pt for m in matches ]).reshape(-1,1,2)
@@ -94,48 +116,56 @@ def merge_images(left_img, right_img, src_pts, dst_pts):
     M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
     right_img_warped = cv2.warpPerspective(right_img, M, (wr + wl, hr + hl))
 
-    #points = np.ones([4, 2, 1]).astype('float32')
-    #print(points.shape)
-    #warped_points = cv2.perspectiveTransform(points, M)
-
     vis = right_img_warped.copy()
     vis[0:hl, 0:wl] = left_img
     return vis
 
-def apply_method(img_1, img_2, method, filename):
-    detector, descriptor, normType = get_detector_descriptor_and_normtype(method)
+def apply_method(img_1, img_2, desc_method, filename, match_filter_method):
+    detector, descriptor, normType = get_detector_descriptor_and_normtype(desc_method)
 
     if detector == None:
-        print("No method found")
+        print("No decriptor method found")
         return None
 
     (kp_1, desc_1), (kp_2, desc_2) = get_keypoints(img_1, img_2, detector,
                                                    descriptor)
-    n_total_matches, best_matches = get_matches(cv2.BFMatcher(normType), kp_1,
-                                                desc_1, kp_2, desc_2)
-
-    if n_total_matches < 4:
-        print("Not enough keypoint matches for " + method)
+    n_total_matches, best_matches = get_matches(cv2.BFMatcher(normType), desc_1,
+                                                desc_2, match_filter_method)
+    if n_total_matches == None:
+        print("No match filter method found")
+        return None
+    elif n_total_matches < 4:
+        print("Not enough keypoint matches for " + desc_method)
         return n_total_matches
+
+    draw_params = dict(matchColor = (0,255,0), # draw matches in green color
+                   singlePointColor = None,
+                   flags = 2)
     matches_img = cv2.drawMatches(img_1, kp_1, img_2, kp_2, best_matches,
-                                  flags=2, outImg=np.array([]))
+                                  outImg=np.array([]), **draw_params)
     pts_1, pts_2 = get_points(best_matches, kp_1, kp_2)
     left_img, right_img, src, dst = order_parameters(img_1, img_2, pts_1, pts_2)
     panorama = merge_images(left_img, right_img, src, dst)
-    save_image(panorama, filename, method)
-    save_image(matches_img, filename, method + "_matches")
+    save_image(panorama, filename, desc_method + "_" + match_filter_method)
+    save_image(matches_img, filename, desc_method + "_matches_" + match_filter_method)
     return n_total_matches
 
 def compare_methods(filename_1, filename_2):
     img_1 = cv2.imread(filename_1)
     img_2 = cv2.imread(filename_2)
     print("Total of matches for image '" + filename_1[:-5] + "':")
-    sift_n_matches = apply_method(img_1, img_2, "SIFT", filename_1)
-    surf_n_matches = apply_method(img_1, img_2, "SURF", filename_1)
-    brief_n_matches = apply_method(img_1, img_2, "BRIEF", filename_1)
-    orb_n_matches = apply_method(img_1, img_2, "ORB", filename_1)
-    print("sift: {}; surf: {}; brief: {}; orb: {}".format(sift_n_matches,
-          surf_n_matches, brief_n_matches, orb_n_matches))
+    sift_n_matches_first_20 = apply_method(img_1, img_2, "SIFT", filename_1, "FIRST_20")
+    sift_n_matches_ratio_test = apply_method(img_1, img_2, "SIFT", filename_1, "RATIO_TEST")
+    surf_n_matches_first_20 = apply_method(img_1, img_2, "SURF", filename_1, "FIRST_20")
+    surf_n_matches_ratio_test = apply_method(img_1, img_2, "SURF", filename_1, "RATIO_TEST")
+    brief_n_matches_first_20 = apply_method(img_1, img_2, "BRIEF", filename_1, "FIRST_20")
+    brief_n_matches_ratio_test = apply_method(img_1, img_2, "BRIEF", filename_1, "RATIO_TEST")
+    orb_n_matches_first_20 = apply_method(img_1, img_2, "ORB", filename_1, "FIRST_20")
+    orb_n_matches_ratio_test = apply_method(img_1, img_2, "ORB", filename_1, "RATIO_TEST")
+    print("FIRST 20: \nsift: {}; surf: {}; brief: {}; orb: {}\n\n".format(sift_n_matches_first_20,
+          surf_n_matches_first_20, brief_n_matches_first_20, orb_n_matches_first_20))
+    print("RATIO TEST: \nsift: {}; surf: {}; brief: {}; orb: {}\n\n".format(sift_n_matches_ratio_test,
+          surf_n_matches_ratio_test, brief_n_matches_ratio_test, orb_n_matches_ratio_test))
 
 def main():
     filenames = [
