@@ -138,7 +138,7 @@ def apply_method(img_1, img_2, desc_method, filename, match_filter_method):
         print("Not enough keypoint matches for " + desc_method)
         return n_total_matches
 
-    draw_params = dict(matchColor = (0,255,0), # draw matches in green color
+    draw_params = dict(matchColor = (0,0,255), # draw matches in red color
                    singlePointColor = None,
                    flags = 2)
     matches_img = cv2.drawMatches(img_1, kp_1, img_2, kp_2, best_matches,
